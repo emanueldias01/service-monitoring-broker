@@ -26,7 +26,7 @@ public class Message implements Serializable {
         this.serviceName = serviceName;
     }
 
-    public Object getBodyMessage() {
+    public String getBodyMessage() {
         return bodyMessage;
     }
 
