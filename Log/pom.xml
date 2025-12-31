@@ -40,6 +40,11 @@
 			<artifactId>spring-boot-starter-data-mongodb-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>br.com.emanueldias</groupId>
+			<artifactId>ClientTCP</artifactId>
+			<version>1.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

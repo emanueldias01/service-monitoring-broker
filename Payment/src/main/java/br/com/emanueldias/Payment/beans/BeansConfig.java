@@ -1,0 +1,20 @@
+package br.com.emanueldias.Payment.beans;
+
+import br.com.emanueldias.client.Client;
+import org.modelmapper.ModelMapper;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class BeansConfig {
+
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
+
+    @Bean
+    public Client client() {
+        return new Client();
+    }
+}

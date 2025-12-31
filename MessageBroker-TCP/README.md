@@ -4,7 +4,7 @@
 ### No servidor:
  - Gerar o Keystore: (Substitua 127.0.0.1 pelo IP real se não for rodar na mesma máquina).
  ```bash
-keytool -genkeypair -alias meuserver -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore eystore.p12 -validity 365 -dname "CN=127.0.0.1" -ext "san=ip:127.0.0.1,dns:localhost"
+keytool -genkeypair -alias meuserver -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore keystore.p12 -validity 365 -dname "CN=127.0.0.1" -ext "san=ip:127.0.0.1,dns:localhost"
 ```
 
  - Exportar o Certificado Público:
