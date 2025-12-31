@@ -6,10 +6,12 @@ import br.com.emanueldias.client.Client;
 import br.com.emanueldias.message.Message;
 import br.com.emanueldias.message.MessageQueueSelection;
 import br.com.emanueldias.message.Role;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
@@ -17,7 +19,11 @@ import java.io.IOException;
 @Service
 public class BrokerService {
 
-    private final Client client;
+    private Client clientLog;
+    private Client clientEmail;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("${ip.broker}")
     private String ipBroker;
@@ -25,57 +31,56 @@ public class BrokerService {
     @Value("${port.broker}")
     private int portBroker;
 
-    public BrokerService(Client client) {
-        this.client = client;
-    }
-
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
+        this.clientLog = new Client();
+        this.clientEmail = new Client();
+
         conectedQueueLog(ipBroker, portBroker);
         conectedQueueEmail(ipBroker, portBroker);
     }
 
     private void conectedQueueLog(String ip, int port) {
         try {
-            this.client.createSocket(ip, port);
-            MessageQueueSelection messageQueueSelection = new MessageQueueSelection("logg.server", Role.PRODUCER);
-            this.client.sendConnectionMessage(messageQueueSelection);
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            this.clientLog.createSocket(ip, port);
+            MessageQueueSelection sel = new MessageQueueSelection("logg.server", Role.PRODUCER);
+            this.clientLog.sendConnectionMessage(sel);
+        } catch (Exception e) {
+            System.err.println("Erro ao conectar fila de Log: " + e.getMessage());
         }
     }
 
     private void conectedQueueEmail(String ip, int port) {
         try {
-            this.client.createSocket(ip, port);
-            MessageQueueSelection messageQueueSelection = new MessageQueueSelection("email.service", Role.PRODUCER);
-            this.client.sendConnectionMessage(messageQueueSelection);
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            this.clientEmail.createSocket(ip, port);
+            MessageQueueSelection sel = new MessageQueueSelection("email.service", Role.PRODUCER);
+            this.clientEmail.sendConnectionMessage(sel);
+        } catch (Exception e) {
+            System.err.println("Erro ao conectar fila de Email: " + e.getMessage());
         }
     }
 
     public void sendMessageForEmail(EmailMessage emailMessage) {
-        Message message = new Message("payment", emailMessage);
+        String messageJsonString = this.objectMapper.writeValueAsString(emailMessage);
+        Message message = new Message("payment", messageJsonString);
         try {
-            this.client.sendMessage(message);
+            this.clientEmail.sendMessage(message);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public void sendMessageForLog(LogMessage logMessage) {
-        Message message = new Message("payment", logMessage);
+        String messageJsonString = this.objectMapper.writeValueAsString(logMessage);
+        Message message = new Message("payment", messageJsonString);
         try {
-            this.client.sendMessage(message);
+            this.clientLog.sendMessage(message);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-
     }
 }

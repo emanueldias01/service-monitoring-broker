@@ -23,15 +23,6 @@ public class Payment {
     public Payment() {
     }
 
-    public Payment(BigDecimal amount, String email) {
-        this.id = UUID.randomUUID();
-        this.amount = amount;
-        this.email = email;
-        this.status = PaymentStatus.CREATED;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
-    }
-
     public void approve() {
         this.status = PaymentStatus.APPROVED;
         this.updatedAt = LocalDateTime.now();

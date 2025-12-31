@@ -44,7 +44,7 @@ public class Server {
 
                     System.out.println("Mensagem do cliente: " + message);
 
-                    ServerMessage serverMessage = new ServerMessage("Mensagem recebida: %s".formatted(message.getBodyMessage()), StatusMessage.RECEIVED);
+                    ServerMessage serverMessage = new ServerMessage("Mensagem recebida: %s".formatted(message.getBodyMessage().toString()), StatusMessage.RECEIVED);
                     output.writeObject(serverMessage);
                     output.flush();
                     queueMessages.addMessage(message);

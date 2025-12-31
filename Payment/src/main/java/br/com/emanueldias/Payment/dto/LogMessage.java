@@ -1,8 +1,9 @@
 package br.com.emanueldias.Payment.dto;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class LogMessage {
+public class LogMessage implements Serializable {
     private LocalDateTime timestamp;
     private String level;
     private String operation;

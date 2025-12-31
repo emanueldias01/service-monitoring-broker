@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -30,9 +31,11 @@ public class PaymentService {
         this.brokerService = brokerService;
     }
 
-    @Transactional
     public PaymentResponseDTO createPayment(PaymentRequestDTO dto) {
         Payment payment = modelMapper.map(dto, Payment.class);
+        payment.setCreatedAt(LocalDateTime.now());
+        payment.setUpdatedAt(LocalDateTime.now());
+        payment.setStatus(PaymentStatus.CREATED);
         paymentRepository.save(payment);
 
         LogMessage logMessage = new LogMessage("INFO", "Pagamento criado: %s".formatted(payment.toString()));
