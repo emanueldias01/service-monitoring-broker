@@ -1,4 +1,4 @@
-package br.com.emanueldias.Payment.beans;
+package br.com.emanueldias.Payment.config;
 
 import br.com.emanueldias.client.Client;
 import org.modelmapper.ModelMapper;

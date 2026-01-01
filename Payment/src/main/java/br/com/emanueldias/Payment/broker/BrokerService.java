@@ -36,11 +36,11 @@ public class BrokerService {
         this.clientLog = new Client();
         this.clientEmail = new Client();
 
-        conectedQueueLog(ipBroker, portBroker);
-        conectedQueueEmail(ipBroker, portBroker);
+        connectQueueLog(ipBroker, portBroker);
+        connectQueueEmail(ipBroker, portBroker);
     }
 
-    private void conectedQueueLog(String ip, int port) {
+    private void connectQueueLog(String ip, int port) {
         try {
             this.clientLog.createSocket(ip, port);
             MessageQueueSelection sel = new MessageQueueSelection("logg.server", Role.PRODUCER);
@@ -50,7 +50,7 @@ public class BrokerService {
         }
     }
 
-    private void conectedQueueEmail(String ip, int port) {
+    private void connectQueueEmail(String ip, int port) {
         try {
             this.clientEmail.createSocket(ip, port);
             MessageQueueSelection sel = new MessageQueueSelection("email.service", Role.PRODUCER);
