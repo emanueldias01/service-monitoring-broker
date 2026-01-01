@@ -1,18 +1,11 @@
-package br.com.emanueldias.Payment.model;
-
-import jakarta.persistence.*;
+package br.com.emanueldias.Email.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-
-@Entity
-@Table(name = "payments")
 public class Payment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private BigDecimal amount;
     private String clientName;

@@ -9,6 +9,7 @@ import java.util.UUID;
 public class PaymentResponseDTO {
     private UUID id;
     private BigDecimal amount;
+    private String clientName;
     private String email;
     private PaymentStatus status;
     private LocalDateTime createdAt;
@@ -18,13 +19,22 @@ public class PaymentResponseDTO {
     public PaymentResponseDTO() {
 
     }
-    public PaymentResponseDTO(UUID id, BigDecimal amount, String email, PaymentStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public PaymentResponseDTO(UUID id, BigDecimal amount, String email, String clientName,PaymentStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.amount = amount;
         this.email = email;
+        this.clientName = clientName;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 
     public UUID getId() {

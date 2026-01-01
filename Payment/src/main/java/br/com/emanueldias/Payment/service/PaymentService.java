@@ -9,7 +9,6 @@ import br.com.emanueldias.Payment.model.Payment;
 import br.com.emanueldias.Payment.model.PaymentStatus;
 import br.com.emanueldias.Payment.repository.PaymentRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
