@@ -45,4 +45,12 @@ public class PaymentController {
     {
         return ResponseEntity.ok(paymentService.markFaliedPayment(paymentId));
     }
+
+    @PostMapping("/latency")
+    public ResponseEntity<PaymentResponseDTO> createPaymentWithLatency(
+            @RequestBody PaymentRequestDTO dto
+    )
+    {
+        return ResponseEntity.ok(paymentService.createPaymentWithHighLatency(dto));
+    }
 }

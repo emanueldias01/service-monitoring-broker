@@ -7,6 +7,9 @@ import br.com.emanueldias.Payment.dto.PaymentRequestDTO;
 import br.com.emanueldias.Payment.dto.PaymentResponseDTO;
 import br.com.emanueldias.Payment.model.Payment;
 import br.com.emanueldias.Payment.model.PaymentStatus;
+import br.com.emanueldias.Payment.monitor.LatencyMonitor;
+import br.com.emanueldias.Payment.monitor.LatencyResult;
+import br.com.emanueldias.Payment.monitor.WarningSimulator;
 import br.com.emanueldias.Payment.repository.PaymentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
@@ -22,63 +25,112 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final BrokerService brokerService;
+    private final MonitoringService monitoringService;
     private final ModelMapper modelMapper;
 
-    public PaymentService(PaymentRepository paymentRepository, BrokerService brokerService,ModelMapper modelMapper) {
+    public PaymentService(PaymentRepository paymentRepository, BrokerService brokerService,MonitoringService monitoringService,ModelMapper modelMapper) {
         this.paymentRepository = paymentRepository;
+        this.monitoringService = monitoringService;
         this.modelMapper = modelMapper;
         this.brokerService = brokerService;
     }
 
     public PaymentResponseDTO createPayment(PaymentRequestDTO dto) {
-        Payment payment = modelMapper.map(dto, Payment.class);
-        payment.setCreatedAt(LocalDateTime.now());
-        payment.setUpdatedAt(LocalDateTime.now());
-        payment.setStatus(PaymentStatus.CREATED);
-        paymentRepository.save(payment);
+        LatencyResult<PaymentResponseDTO> latencyResult =
+                LatencyMonitor.measure(() -> {
+                    Payment payment = modelMapper.map(dto, Payment.class);
+                    payment.setCreatedAt(LocalDateTime.now());
+                    payment.setUpdatedAt(LocalDateTime.now());
+                    payment.setStatus(PaymentStatus.CREATED);
+                    paymentRepository.save(payment);
 
-        LogMessage logMessage = new LogMessage("INFO", "Pagamento criado: %s".formatted(payment.toString()));
-        brokerService.sendMessageForLog(logMessage);
+                    LogMessage logMessage = new LogMessage(
+                            "INFO", "Pagamento criado: %s".formatted(payment.toString())
+                    );
+                    brokerService.sendMessageForLog(logMessage);
+                    EmailMessage message = new EmailMessage(PaymentStatus.CREATED, payment);
+                    brokerService.sendMessageForEmail(message);
 
-        EmailMessage message = new EmailMessage(PaymentStatus.CREATED, payment);
-        brokerService.sendMessageForEmail(message);
+                    return modelMapper.map(payment, PaymentResponseDTO.class);
+                });
 
-        return modelMapper.map(payment, PaymentResponseDTO.class);
+        monitoringService.checkLatency(latencyResult.getLatency());
+
+        return latencyResult.getResult();
+
     }
 
     public PaymentResponseDTO markAproved(UUID paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("Pagamento não encontrado"));
-        payment.approve();
-        paymentRepository.save(payment);
+        LatencyResult<PaymentResponseDTO> latencyResult =
+                LatencyMonitor.measure(() -> {
+                    Payment payment = paymentRepository.findById(paymentId)
+                            .orElseThrow(() -> new EntityNotFoundException("Pagamento não encontrado"));
+                    payment.approve();
+                    paymentRepository.save(payment);
 
-        //enviar mensagem para broker(LOG -> OPERACAO | EMAIL -> PAGAMENTO APROVADO)
+                    LogMessage logMessage = new LogMessage("INFO", "Pagamento aprovado: %s".formatted(payment.toString()));
+                    brokerService.sendMessageForLog(logMessage);
+                    EmailMessage message = new EmailMessage(PaymentStatus.APPROVED, payment);
+                    brokerService.sendMessageForEmail(message);
 
-        LogMessage logMessage = new LogMessage("INFO", "Pagamento aprovado: %s".formatted(payment.toString()));
-        brokerService.sendMessageForLog(logMessage);
+                    return modelMapper.map(payment, PaymentResponseDTO.class);
+                });
 
-        EmailMessage message = new EmailMessage(PaymentStatus.APPROVED, payment);
-        brokerService.sendMessageForEmail(message);
+        monitoringService.checkLatency(latencyResult.getLatency());
 
-        return modelMapper.map(payment, PaymentResponseDTO.class);
+        return latencyResult.getResult();
     }
 
     public PaymentResponseDTO markFaliedPayment(UUID paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("Pagamento não encontrado"));
-        if(payment.getStatus().equals(PaymentStatus.APPROVED) || payment.getStatus().equals(PaymentStatus.FAILED)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Este pagamento já foi processado");
-        }
-        payment.markFailed();
-        paymentRepository.save(payment);
+        LatencyResult<PaymentResponseDTO> latencyResult =
+                LatencyMonitor.measure(() -> {
+                    Payment payment = paymentRepository.findById(paymentId)
+                            .orElseThrow(() -> new EntityNotFoundException("Pagamento não encontrado"));
+                    if(payment.getStatus().equals(PaymentStatus.APPROVED) || payment.getStatus().equals(PaymentStatus.FAILED)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Este pagamento já foi processado");
+                    }
+                    payment.markFailed();
+                    paymentRepository.save(payment);
 
-        //enviar mensagem para broker(LOG -> OPERACAO | EMAIL -> PAGAMENTO FALHO)
-        LogMessage logMessage = new LogMessage("INFO", "Pagamento falho: %s".formatted(payment.toString()));
-        brokerService.sendMessageForLog(logMessage);
+                    LogMessage logMessage = new LogMessage("INFO", "Pagamento falho: %s".formatted(payment.toString()));
+                    brokerService.sendMessageForLog(logMessage);
 
-        EmailMessage message = new EmailMessage(PaymentStatus.FAILED, payment);
-        brokerService.sendMessageForEmail(message);
+                    EmailMessage message = new EmailMessage(PaymentStatus.FAILED, payment);
+                    brokerService.sendMessageForEmail(message);
 
-        return modelMapper.map(payment, PaymentResponseDTO.class);
+                    return modelMapper.map(payment, PaymentResponseDTO.class);
+                });
+
+        monitoringService.checkLatency(latencyResult.getLatency());
+
+        return latencyResult.getResult();
+    }
+
+    public PaymentResponseDTO createPaymentWithHighLatency(PaymentRequestDTO dto) {
+        LatencyResult<PaymentResponseDTO> latencyResult =
+                LatencyMonitor.measure(() -> {
+
+                    WarningSimulator.simulateHighLatency();
+
+                    Payment payment = modelMapper.map(dto, Payment.class);
+                    payment.setCreatedAt(LocalDateTime.now());
+                    payment.setUpdatedAt(LocalDateTime.now());
+                    payment.setStatus(PaymentStatus.CREATED);
+                    paymentRepository.save(payment);
+
+                    LogMessage logMessage = new LogMessage(
+                            "INFO", "Pagamento criado: %s".formatted(payment.toString())
+                    );
+                    brokerService.sendMessageForLog(logMessage);
+                    EmailMessage message = new EmailMessage(PaymentStatus.CREATED, payment);
+                    brokerService.sendMessageForEmail(message);
+
+                    return modelMapper.map(payment, PaymentResponseDTO.class);
+                });
+
+        monitoringService.checkLatency(latencyResult.getLatency());
+
+        return latencyResult.getResult();
+
     }
 }
