@@ -2,13 +2,16 @@ package br.com.emanueldias.Payment.config;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.system.ApplicationHome;
 import org.springframework.context.annotation.Configuration;
+
+import java.io.File;
 
 @Configuration
 public class SSLConfig {
 
     @Value("${broker.ssl.trust-store}")
-    private String trustStore;
+    private String trustStoreFileName;
 
     @Value("${broker.ssl.trust-store-password}")
     private String trustStorePassword;
@@ -18,12 +21,20 @@ public class SSLConfig {
 
     @PostConstruct
     public void initSslSystemProperties() {
-        String cleanPath = trustStore.replace("file:", "");
+        ApplicationHome home = new ApplicationHome(getClass());
+        File jarDir = home.getDir();
 
-        System.setProperty("javax.net.ssl.trustStore", cleanPath);
+        File trustStoreFile = new File(jarDir, trustStoreFileName);
+
+        if (!trustStoreFile.exists()) {
+            System.err.println("ERRO CRÍTICO: Truststore não encontrado em: " + trustStoreFile.getAbsolutePath());
+        }
+
+        System.setProperty("javax.net.ssl.trustStore", trustStoreFile.getAbsolutePath());
         System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
         System.setProperty("javax.net.ssl.trustStoreType", trustStoreType);
 
-        System.out.println("SSL System Properties carregadas com sucesso!");
+        System.out.println("SSL System Properties configuradas.");
+        System.out.println("Truststore carregado de: " + trustStoreFile.getAbsolutePath());
     }
 }
