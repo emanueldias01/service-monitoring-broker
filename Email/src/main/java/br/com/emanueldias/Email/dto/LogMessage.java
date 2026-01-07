@@ -1,6 +1,7 @@
 package br.com.emanueldias.Email.dto;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 public class LogMessage {
     private LocalDateTime timestamp;
@@ -8,7 +9,7 @@ public class LogMessage {
     private String operation;
 
     public LogMessage(String level, String operation) {
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
         this.level = level;
         this.operation = operation;
     }
