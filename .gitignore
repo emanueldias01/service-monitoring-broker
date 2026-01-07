@@ -1,0 +1,3 @@
+/Email/src/main/resources/application-dev.properties
+/Log/src/main/resources/application-dev.properties
+/Payment/src/main/resources/application-dev.properties
