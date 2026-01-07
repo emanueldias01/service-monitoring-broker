@@ -57,22 +57,30 @@ public class BrokerService {
             MessageQueueSelection sel = new MessageQueueSelection("logg.server", Role.CONSUMER);
             this.clientLog.sendConnectionMessage(sel);
         } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            System.err.println("não foi possível se conectar ao broker:");
+            e.printStackTrace();
         }
     }
 
     public void consumerQueueLog() {
         while (true) {
-            Message message = this.clientLog.listenMessage();
             try {
-                LogMessage dto = objectMapper.readValue(
-                        message.getBodyMessage(),
-                        LogMessage.class
-                );
-                logService.persistMessage(dto);
-            } catch (Exception e) {
-                e.printStackTrace();
+                Message message = this.clientLog.listenMessage();
+                try {
+                    LogMessage dto = objectMapper.readValue(
+                            message.getBodyMessage(),
+                            LogMessage.class
+                    );
+                    logService.persistMessage(dto);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }catch (IllegalAccessError ex) {
+                System.err.println("Não foi possível consumir a fila de log:");
+                ex.printStackTrace();
+                break;
             }
+
         }
     }
 }

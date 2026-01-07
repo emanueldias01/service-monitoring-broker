@@ -56,7 +56,7 @@ public class BrokerService {
             MessageQueueSelection sel = new MessageQueueSelection("email.service", Role.CONSUMER);
             clientEmail.sendConnectionMessage(sel);
         } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            System.err.println("Erro ao conectar fila de Pagamentos: " + e.getMessage());
         }
     }
 
@@ -76,7 +76,8 @@ public class BrokerService {
         try {
             clientLog.sendMessage(message);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Não foi possível enviar mensagens para a fila de log:");
+            e.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -84,25 +85,26 @@ public class BrokerService {
 
     public void consumerQueueEmailPayment() {
         while (true) {
-            Message message = clientEmail.listenMessage();
-            try {
-                EmailMessage emailMessage =
-                        objectMapper.readValue(
-                                message.getBodyMessage(),
-                                EmailMessage.class
-                        );
+            try{
+                Message message = clientEmail.listenMessage();
+                try {
+                    EmailMessage emailMessage =
+                            objectMapper.readValue(
+                                    message.getBodyMessage(),
+                                    EmailMessage.class
+                            );
 
-                emailService.sendEmailForPayment(emailMessage);
+                    emailService.sendEmailForPayment(emailMessage);
 
-            } catch (Exception e) {
-                e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    break;
+                }
+            } catch (IllegalAccessError ex) {
+                System.err.println("Não foi possível consumir a fila de pagamentos");
+                break;
             }
-//            try {
-//                Só pra não explodir de threads criadas
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            }
+
         }
     }
 }

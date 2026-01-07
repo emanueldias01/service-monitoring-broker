@@ -64,10 +64,9 @@ public class BrokerService {
         Message message = new Message("payment", messageJsonString);
         try {
             this.clientEmail.sendMessage(message);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Não foi possível mandar mensagens para a fila de email:");
+            e.printStackTrace();
         }
     }
 
@@ -76,10 +75,9 @@ public class BrokerService {
         Message message = new Message("payment", messageJsonString);
         try {
             this.clientLog.sendMessage(message);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Não foi possível mandar mensagens para a fila de log:");
+            e.printStackTrace();
         }
     }
 }
