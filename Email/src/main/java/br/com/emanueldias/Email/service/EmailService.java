@@ -1,9 +1,12 @@
 package br.com.emanueldias.Email.service;
 
+import br.com.emanueldias.Email.broker.BrokerService;
 import br.com.emanueldias.Email.dto.EmailMessage;
+import br.com.emanueldias.Email.dto.LogMessage;
 import br.com.emanueldias.Email.dto.Payment;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -14,9 +17,11 @@ import static br.com.emanueldias.Email.dto.PaymentStatus.*;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final BrokerService brokerService;
 
-    public EmailService(JavaMailSender mailSender) {
+    public EmailService(JavaMailSender mailSender, @Lazy BrokerService brokerService) {
         this.mailSender = mailSender;
+        this.brokerService = brokerService;
     }
 
     private final String EMAIL_TEMPLATE = """
@@ -81,6 +86,13 @@ public class EmailService {
             helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
+
+            LogMessage logMessage = new LogMessage(
+                    "INFO",
+                    "E-mail enviado com sucesso para: " + payment.getEmail()
+            );
+
+            brokerService.sendMessageForLog(logMessage);
             System.out.println("E-mail enviado com sucesso para: " + payment.getEmail());
 
         } catch (MessagingException e) {

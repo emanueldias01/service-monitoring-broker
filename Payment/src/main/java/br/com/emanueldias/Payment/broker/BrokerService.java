@@ -31,7 +31,6 @@ public class BrokerService {
     @Value("${port.broker}")
     private int portBroker;
 
-    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         this.clientLog = new Client();
         this.clientEmail = new Client();

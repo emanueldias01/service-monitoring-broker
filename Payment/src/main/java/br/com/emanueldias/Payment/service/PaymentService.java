@@ -50,6 +50,7 @@ public class PaymentService {
                     brokerService.sendMessageForLog(logMessage);
                     EmailMessage message = new EmailMessage(PaymentStatus.CREATED, payment);
                     brokerService.sendMessageForEmail(message);
+                    brokerService.sendMessageForLog(logMessage);
 
                     return modelMapper.map(payment, PaymentResponseDTO.class);
                 });

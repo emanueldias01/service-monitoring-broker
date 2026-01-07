@@ -1,6 +1,7 @@
 package br.com.emanueldias.Email.broker;
 
 import br.com.emanueldias.Email.dto.EmailMessage;
+import br.com.emanueldias.Email.dto.LogMessage;
 import br.com.emanueldias.Email.service.EmailService;
 import br.com.emanueldias.client.Client;
 import br.com.emanueldias.message.Message;
@@ -8,8 +9,6 @@ import br.com.emanueldias.message.MessageQueueSelection;
 import br.com.emanueldias.message.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
@@ -18,7 +17,7 @@ import java.io.IOException;
 @Service
 public class BrokerService {
 
-    @Autowired
+    private Client clientLog;
     private Client clientEmail;
 
     @Autowired
@@ -33,9 +32,10 @@ public class BrokerService {
     @Value("${port.broker}")
     private int portBroker;
 
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void startConsuming() {
+    public void init() {
+        this.clientLog = new Client();
+        this.clientEmail = new Client();
+        connectQueueLog();
         Thread consumerThread = new Thread(() -> {
             try {
                 connectQueuePayment();
@@ -52,10 +52,32 @@ public class BrokerService {
 
     public void connectQueuePayment() {
         try {
-            this.clientEmail.createSocket(ipBroker, portBroker);
+            clientEmail.createSocket(ipBroker, portBroker);
             MessageQueueSelection sel = new MessageQueueSelection("email.service", Role.CONSUMER);
-            this.clientEmail.sendConnectionMessage(sel);
+            clientEmail.sendConnectionMessage(sel);
         } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void connectQueueLog() {
+        try {
+            this.clientLog.createSocket(ipBroker, portBroker);
+            MessageQueueSelection sel = new MessageQueueSelection("logg.server", Role.PRODUCER);
+            clientLog.sendConnectionMessage(sel);
+        } catch (Exception e) {
+            System.err.println("Erro ao conectar fila de Log: " + e.getMessage());
+        }
+    }
+
+    public void sendMessageForLog(LogMessage logMessage) {
+        String messageJsonString = objectMapper.writeValueAsString(logMessage);
+        Message message = new Message("email", messageJsonString);
+        try {
+            clientLog.sendMessage(message);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
